@@ -18,7 +18,7 @@ if (!process.env.MYSQL_HOST || !process.env.MYSQL_USER || !process.env.MYSQL_PAS
 }
 
 // SQL query function with parameterized queries
-export async function sql<T>(query: string, values: any[] = []): Promise<T[]> {
+export async function sql<T>(query: string, values: unknown[] = []): Promise<T[]> {
   try {
     // Log query and values for debugging
     console.log('Executing MySQL query:', { query, values });

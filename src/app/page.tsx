@@ -159,7 +159,7 @@ export default function LandingPage() {
                     </div>
                   </div>
                   <p className={`italic ${theme === 'dark' ? 'text-slate-300' : 'text-slate-700'}`}>
-                    "The AI Engineer roadmap helped me land a job at a top tech company!"
+                    &quot;The AI Engineer roadmap helped me land a job at a top tech company!&quot;
                   </p>
                 </CardContent>
               </Card>
@@ -175,7 +175,7 @@ export default function LandingPage() {
                     </div>
                   </div>
                   <p className={`italic ${theme === 'dark' ? 'text-slate-300' : 'text-slate-700'}`}>
-                    "The Cybersecurity path was clear and practical. Now I’m a security analyst."
+                  &quot;The Cybersecurity path was clear and practical. Now I&apos;m a security analyst.&quot;
                   </p>
                 </CardContent>
               </Card>
@@ -191,7 +191,7 @@ export default function LandingPage() {
                     </div>
                   </div>
                   <p className={`italic ${theme === 'dark' ? 'text-slate-300' : 'text-slate-700'}`}>
-                    "The AI-generated roadmap was tailored perfectly to my goals."
+                  &quot;The AI-generated roadmap was tailored perfectly to my goals.&quot;
                   </p>
                 </CardContent>
               </Card>

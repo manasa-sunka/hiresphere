@@ -15,7 +15,6 @@ import {
   DialogContent,
   DialogHeader,
   DialogTitle,
-  DialogTrigger,
 } from '@/components/ui/dialog';
 import {
   Select,
@@ -158,7 +157,7 @@ export default function AdminDashboard() {
         const response = await fetch('/api/users');
         const data = await response.json();
         setUsers(data.users);
-      } catch (error) {
+      } catch {
         toast.error('Failed to fetch users');
       } finally {
         setIsLoading(false);
@@ -193,7 +192,7 @@ export default function AdminDashboard() {
         const error = await response.json();
         toast.error(error.error || 'Failed to create user');
       }
-    } catch (error) {
+    } catch {
       toast.error('Failed to create user');
     } finally {
       setIsSubmitting(false);
@@ -652,7 +651,7 @@ export default function AdminDashboard() {
                 <Select
                   value={formData.role}
                   onValueChange={(value) =>
-                    setFormData({ ...formData, role: value as any })
+                    setFormData({ ...formData, role: value as 'admin' | 'student' | 'alumni' })
                   }
                 >
                   <SelectTrigger className="bg-slate-700 border-slate-600 text-slate-200">

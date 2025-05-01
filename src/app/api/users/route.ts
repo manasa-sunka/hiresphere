@@ -1,5 +1,4 @@
 import { NextResponse } from 'next/server';
-import { auth } from '@clerk/nextjs/server';
 import { createClerkClient } from '@clerk/clerk-sdk-node';
 
 // Constants
@@ -27,21 +26,46 @@ interface CreateUserRequest {
   role: UserRole;
 }
 
+interface ClerkEmail {
+  id: string;
+  emailAddress: string;
+}
+
+interface ClerkUser {
+  id: string;
+  firstName: string | null;
+  lastName: string | null;
+  primaryEmailAddressId: string | null;
+  emailAddresses: ClerkEmail[];
+  publicMetadata: { role?: UserRole };
+  createdAt: number;
+}
+
+interface ClerkError {
+  message: string;
+  status?: number;
+  errors?: { message: string }[];
+  clerkTraceId?: string;
+}
+
 // Initialize Clerk
 const clerkClient = createClerkClient({
   secretKey: process.env.CLERK_SECRET_KEY,
 });
 
 // Utility functions
-const mapClerkUserToResponse = (user: any): UserResponse => ({
-  id: user.id,
-  email: user.emailAddresses.find((email: any) => email.id === user.primaryEmailAddressId)?.emailAddress || '',
-  firstName: user.firstName,
-  lastName: user.lastName,
-  fullName: user.firstName && user.lastName ? `${user.firstName} ${user.lastName}` : user.firstName || user.lastName || null,
-  role: (user.publicMetadata as { role?: 'admin' | 'student' | 'alumni' }).role || 'student',
-  createdAt: user.createdAt,
-});
+const mapClerkUserToResponse = (user: ClerkUser): UserResponse => {
+  const primaryEmail = user.emailAddresses.find((email) => email.id === user.primaryEmailAddressId);
+  return {
+    id: user.id,
+    email: primaryEmail?.emailAddress || '',
+    firstName: user.firstName,
+    lastName: user.lastName,
+    fullName: user.firstName && user.lastName ? `${user.firstName} ${user.lastName}` : user.firstName || user.lastName || null,
+    role: user.publicMetadata.role || 'student',
+    createdAt: user.createdAt,
+  };
+};
 
 const createErrorResponse = (message: string, status: number) =>
   new NextResponse(JSON.stringify({ error: message }), {
@@ -49,12 +73,11 @@ const createErrorResponse = (message: string, status: number) =>
     headers: { 'Content-Type': 'application/json' },
   });
 
-
 // GET: Fetch all users
 export async function GET() {
   try {
     const userList = await clerkClient.users.getUserList({ limit: USERS_PER_PAGE });
-    const mappedUsers = userList.data.map(mapClerkUserToResponse);
+    const mappedUsers = userList.data.map((user) => mapClerkUserToResponse(user as ClerkUser));
     return NextResponse.json({ users: mappedUsers });
   } catch (error) {
     console.error('Error fetching users:', error);
@@ -65,7 +88,6 @@ export async function GET() {
 // POST: Create a new user
 export async function POST(request: Request) {
   try {
-
     // Parse and validate request body
     const body: CreateUserRequest = await request.json();
     const { firstName, lastName, email, password, role } = body;
@@ -93,19 +115,20 @@ export async function POST(request: Request) {
       publicMetadata: { role },
     });
 
-    return NextResponse.json(mapClerkUserToResponse(user));
-  } catch (error: any) {
+    return NextResponse.json(mapClerkUserToResponse(user as ClerkUser));
+  } catch (error) {
+    const clerkError = error as ClerkError;
     console.error('Error creating user:', {
-      message: error.message,
-      status: error.status,
-      errors: error.errors,
-      clerkTraceId: error.clerkTraceId,
+      message: clerkError.message,
+      status: clerkError.status,
+      errors: clerkError.errors,
+      clerkTraceId: clerkError.clerkTraceId,
     });
 
     // Handle specific Clerk errors
-    if (error.status === 422 && error.errors) {
-      const errorMessage = error.errors
-        .map((err: any) => err.message)
+    if (clerkError.status === 422 && clerkError.errors) {
+      const errorMessage = clerkError.errors
+        .map((err) => err.message)
         .join(', ');
       return createErrorResponse(`Failed to create user: ${errorMessage}`, 422);
     }

@@ -8,7 +8,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardFooter } from '@/componen
 import { Checkbox } from '@/components/ui/checkbox';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { Textarea } from '@/components/ui/textarea';
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Progress } from '@/components/ui/progress';
 import { Badge } from '@/components/ui/badge';
@@ -16,7 +16,6 @@ import {
   Heart, 
   ArrowLeft, 
   ExternalLink, 
-  CheckCircle, 
   MessageSquareText,
   Send,
   Calendar,
@@ -200,7 +199,7 @@ const RoadmapDetail = () => {
         content: response.answer
       };
       setChatMessages(prev => [...prev, assistantMessage]);
-    } catch (error) {
+    } catch {
       toast.error('Failed to get help. Please try again.');
       
       // Add error message
@@ -285,7 +284,7 @@ const RoadmapDetail = () => {
               <Lightbulb className="h-8 w-8 text-amber-600 dark:text-amber-400" />
             </div>
             <h2 className="text-xl font-semibold text-slate-800 dark:text-slate-200 mb-3">Roadmap not found</h2>
-            <p className="text-slate-600 dark:text-slate-400 mb-6">The roadmap you're looking for doesn't exist or has been removed.</p>
+            <p className="text-slate-600 dark:text-slate-400 mb-6">The roadmap you&apos;re looking for doesn&apos;t exist or has been removed.</p>
             <Button 
               variant="default"
               className="bg-blue-600 hover:bg-blue-700 text-white"

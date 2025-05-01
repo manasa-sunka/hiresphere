@@ -6,7 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
-import { LogOutIcon, Plus, Trash2, ExternalLink, Stars, Search, Filter, Calendar, Heart, ChevronDown } from 'lucide-react';
+import {  Plus, Trash2,  Stars, Search, Filter, Calendar, Heart, ChevronDown } from 'lucide-react';
 import { toast } from 'sonner';
 import { ScaleLoader } from 'react-spinners';
 import { generateRoadmap, Step } from '@/lib/gemini';
@@ -130,7 +130,7 @@ const AlumniDashboard = () => {
 
   const updateStep = (index: number, field: keyof Step, value: string | string[]) => {
     const steps = [...formData.steps];
-    steps[index][field] = value as any;
+    steps[index][field] = value as string & string[];
     setFormData({ ...formData, steps });
   };
 
