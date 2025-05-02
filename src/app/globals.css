@@ -18,7 +18,22 @@
 .animate-fade-in {
   animation: fade-in 0.8s ease-out;
 }
+/* Ensure smooth transitions and no jitter in marquee */
+.marquee-container {
+  overflow: hidden;
+}
 
+/* Optional: Customize scrollbar for horizontal scrolling */
+.marquee-container::-webkit-scrollbar {
+  height: 8px;
+}
+.marquee-container::-webkit-scrollbar-thumb {
+  background: #60A5FA;
+  border-radius: 4px;
+}
+.marquee-container::-webkit-scrollbar-track {
+  background: transparent;
+}
 .animate-fade-in-up {
   animation: fade-in-up 0.8s ease-out;
 }

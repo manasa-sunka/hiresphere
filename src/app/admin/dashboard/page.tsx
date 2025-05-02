@@ -1,45 +1,34 @@
-"use client"
+"use client";
+
 import { useState, useEffect } from 'react';
+import { useTheme } from 'next-themes';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from '@/components/ui/table';
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-} from '@/components/ui/dialog';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Label } from '@/components/ui/label';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Search, UserPlus, Filter } from 'lucide-react';
 import { toast } from 'sonner';
-import { PieChart, Pie, Cell, BarChart, Bar, XAxis, YAxis, Tooltip, Legend, ResponsiveContainer } from 'recharts';
-import { Users, UserPlus, UserCheck, Calendar, Award, Search, Loader2, LogOutIcon } from 'lucide-react';
-import { SignOutButton } from '@clerk/nextjs';
+import { ScaleLoader, ClipLoader } from 'react-spinners';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+  DropdownMenuSeparator,
+  DropdownMenuLabel,
+} from '@/components/ui/dropdown-menu';
+import { PieChart, Pie, Cell, BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer } from 'recharts';
 
 // Types
-interface User {
+interface UserResponse {
+  createdAt: number;
   id: string;
   email: string;
-  firstName: string | null;
-  lastName: string | null;
   fullName: string | null;
   role: 'admin' | 'student' | 'alumni';
-  createdAt: number;
 }
 
 interface CreateUserForm {
@@ -50,60 +39,60 @@ interface CreateUserForm {
   role: 'admin' | 'student' | 'alumni';
 }
 
-interface UserStats {
-  totalUsers: number;
-  adminCount: number;
-  studentCount: number;
-  alumniCount: number;
+interface RoadmapTableData {
+  title: string;
+  year: number | null;
+  ai_generated: 'AI' | 'User';
+  created_by: string;
+  created_at: string;
+  likes: number;
+}
+
+interface RoadmapStats {
+  totalRoadmaps: number;
+  aiVsUser: { name: string; value: number }[];
+  byYear: { year: number; count: number }[];
+}
+
+interface ApiResponse {
+  users: UserResponse[];
+  roadmapData: {
+    table: RoadmapTableData[];
+    stats: RoadmapStats;
+  };
 }
 
 // Loading Spinner Component
-const LoadingSpinner = () => (
-  <div className="flex flex-col items-center justify-center space-y-4 py-12">
-    <div className="relative">
-      <div className="w-12 h-12 rounded-full border-4 border-t-indigo-500 border-r-purple-500 border-b-cyan-500 border-l-emerald-500 animate-spin"></div>
-      <Loader2 className="w-6 h-6 text-white absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2" />
-    </div>
-    <p className="text-indigo-300 animate-pulse">Loading data...</p>
+const LoadingSpinner = ({ theme }: { theme: string }) => (
+  <div className="flex flex-col items-center justify-center h-[60vh]">
+    <ScaleLoader color={theme === 'dark' ? '#60A5FA' : '#2563EB'} height={35} />
+    <p className={`mt-4 ${theme === 'dark' ? 'text-slate-300' : 'text-slate-600'}`}>Loading...</p>
   </div>
 );
 
-// Card Loading Skeleton
-const CardSkeleton = () => (
-  <Card className="border-0 bg-slate-800/50">
-    <CardHeader className="pb-2">
-      <div className="h-4 w-24 bg-slate-700 rounded animate-pulse"></div>
-    </CardHeader>
-    <CardContent>
-      <div className="flex justify-between items-center">
-        <div className="h-8 w-12 bg-slate-700 rounded animate-pulse"></div>
-        <div className="h-6 w-6 rounded-full bg-slate-700 animate-pulse"></div>
-      </div>
-    </CardContent>
-  </Card>
-);
 
-// Chart Loading Skeleton
-const ChartSkeleton = () => (
-  <Card className="border-0 bg-slate-800/50">
+// Chart Skeleton Component
+const ChartSkeleton = ({ theme }: { theme: string }) => (
+  <Card className={`${theme === 'dark' ? 'bg-slate-800/50 border-slate-700' : 'bg-slate-100/50 border-slate-200'}`}>
     <CardHeader>
-      <div className="h-5 w-40 bg-slate-700 rounded animate-pulse"></div>
-      <div className="h-4 w-64 bg-slate-700/70 rounded animate-pulse mt-2"></div>
+      <div className={`h-5 w-40 ${theme === 'dark' ? 'bg-slate-700' : 'bg-slate-300'} rounded animate-pulse`}></div>
     </CardHeader>
     <CardContent>
-      <div className="h-64 w-full bg-slate-800 rounded flex items-center justify-center">
-        <div className="w-8 h-8 rounded-full border-2 border-t-indigo-500 border-r-purple-500 border-b-cyan-500 border-l-emerald-500 animate-spin"></div>
+      <div className={`h-64 w-full ${theme === 'dark' ? 'bg-slate-900' : 'bg-slate-200'} rounded flex items-center justify-center`}>
+        <ClipLoader color={theme === 'dark' ? '#60A5FA' : '#2563EB'} size={40} />
       </div>
     </CardContent>
   </Card>
 );
 
 export default function AdminDashboard() {
-  const [users, setUsers] = useState<User[]>([]);
+  const { theme } = useTheme();
+  const [data, setData] = useState<ApiResponse>({ users: [], roadmapData: { table: [], stats: { totalRoadmaps: 0, aiVsUser: [], byYear: [] } } });
   const [isLoading, setIsLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
-  const [sortField, setSortField] = useState<keyof User>('createdAt');
-  const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc');
+  const [yearFilter, setYearFilter] = useState<number | null>(null);
+  const [sortField, setSortField] = useState<keyof UserResponse>('fullName');
+  const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('asc');
   const [formData, setFormData] = useState<CreateUserForm>({
     firstName: '',
     lastName: '',
@@ -112,58 +101,24 @@ export default function AdminDashboard() {
     role: 'student',
   });
   const [dialogOpen, setDialogOpen] = useState(false);
-  const [activeTab, setActiveTab] = useState('overview');
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  // Color palette for charts and UI elements
-  const COLORS = {
-    admin: '#6366f1', // indigo
-    student: '#06b6d4', // cyan
-    alumni: '#8b5cf6', // purple
-    card: {
-      bg: 'bg-slate-800',
-      border: 'border-slate-700',
-      hover: 'hover:bg-slate-700/50'
-    },
-    text: {
-      primary: 'text-slate-100',
-      secondary: 'text-slate-300',
-      muted: 'text-slate-400'
-    },
-    chart: ['#6366f1', '#06b6d4', '#8b5cf6', '#10b981']
-  };
-
-  // Role badge styling function
-  const getRoleBadgeStyle = (role: string) => {
-    switch (role) {
-      case 'admin':
-        return 'bg-indigo-900/40 text-indigo-300 border border-indigo-600/30';
-      case 'student':
-        return 'bg-cyan-900/40 text-cyan-300 border border-cyan-600/30';
-      case 'alumni':
-        return 'bg-purple-900/40 text-purple-300 border border-purple-600/30';
-      default:
-        return 'bg-slate-800 text-slate-300';
-    }
-  };
-
-  // Fetch users
+  // Fetch data from /api/users
   useEffect(() => {
-    async function fetchUsers() {
+    async function fetchData() {
       setIsLoading(true);
       try {
-        // Simulate network delay for demo purposes
-        await new Promise(resolve => setTimeout(resolve, 1500));
         const response = await fetch('/api/users');
-        const data = await response.json();
-        setUsers(data.users);
+        if (!response.ok) throw new Error('Failed to fetch data');
+        const json = await response.json();
+        setData(json);
       } catch {
-        toast.error('Failed to fetch users');
+        toast.error('Failed to fetch admin data');
       } finally {
         setIsLoading(false);
       }
     }
-    fetchUsers();
+    fetchData();
   }, []);
 
   // Handle form submission
@@ -178,7 +133,10 @@ export default function AdminDashboard() {
       });
       if (response.ok) {
         const newUser = await response.json();
-        setUsers([newUser, ...users]);
+        setData((prev) => ({
+          ...prev,
+          users: [newUser, ...prev.users],
+        }));
         toast.success('User created successfully');
         setFormData({
           firstName: '',
@@ -200,7 +158,7 @@ export default function AdminDashboard() {
   };
 
   // Handle sorting
-  const handleSort = (field: keyof User) => {
+  const handleSort = (field: keyof UserResponse) => {
     if (field === sortField) {
       setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc');
     } else {
@@ -210,53 +168,67 @@ export default function AdminDashboard() {
   };
 
   // Filter and sort users
-  const filteredUsers = users
+  const filteredUsers = data.users
     .filter((user) =>
-      user.fullName?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      user.email.toLowerCase().includes(searchTerm.toLowerCase())
+      (user.fullName?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        user.email.toLowerCase().includes(searchTerm.toLowerCase())) &&
+      (yearFilter === null || user.role === 'admin')
     )
     .sort((a, b) => {
       const aValue = a[sortField] || '';
       const bValue = b[sortField] || '';
-      if (sortOrder === 'asc') {
-        return aValue > bValue ? 1 : -1;
-      }
-      return aValue < bValue ? 1 : -1;
+      return sortOrder === 'asc'
+        ? String(aValue).localeCompare(String(bValue))
+        : String(bValue).localeCompare(String(aValue));
     });
 
-  // Calculate user statistics
-  const userStats: UserStats = {
-    totalUsers: users.length,
-    adminCount: users.filter(user => user.role === 'admin').length,
-    studentCount: users.filter(user => user.role === 'student').length,
-    alumniCount: users.filter(user => user.role === 'alumni').length,
+  // Filter roadmaps
+  const filteredRoadmaps = data.roadmapData.table.filter(
+    (roadmap) => yearFilter === null || roadmap.year === yearFilter
+  );
+
+  // Reset filters
+  const resetFilters = () => {
+    setSearchTerm('');
+    setYearFilter(null);
   };
 
-  // Data for pie chart
+  // Available years for filter
+  const availableYears = [...new Set(data.roadmapData.table.map((r) => r.year).filter(Boolean))].sort(
+    (a, b) => Number(b) - Number(a)
+  );
+
+  // User statistics
+  const userStats = {
+    totalUsers: data.users.length,
+    adminCount: data.users.filter((user) => user.role === 'admin').length,
+    studentCount: data.users.filter((user) => user.role === 'student').length,
+    alumniCount: data.users.filter((user) => user.role === 'alumni').length,
+  };
+
+  // Role distribution for pie chart
   const roleDistribution = [
     { name: 'Admin', value: userStats.adminCount },
     { name: 'Student', value: userStats.studentCount },
     { name: 'Alumni', value: userStats.alumniCount },
   ];
 
-  // Group users by month
-  const getMonthData = () => {
+  // User growth trend (last 6 months)
+  const getUserGrowthData = () => {
     const monthData = new Array(6).fill(0).map((_, i) => {
       const date = new Date();
       date.setMonth(date.getMonth() - i);
       return {
-        month: date.toLocaleString('default', { month: 'short' }),
+        month: date.toLocaleString('default', { month: 'short', year: 'numeric' }),
         count: 0,
-        timestamp: date.getTime(),
       };
     }).reverse();
 
-    users.forEach(user => {
-      const userDate = new Date(user.createdAt);
-      const monthIndex = monthData.findIndex(item => {
-        const itemDate = new Date(item.timestamp);
-        return itemDate.getMonth() === userDate.getMonth() &&
-          itemDate.getFullYear() === userDate.getFullYear();
+    data.users.forEach((user) => {
+      const userDate = new Date(user.createdAt || Date.now());
+      const monthIndex = monthData.findIndex((item) => {
+        const itemDate = new Date(item.month);
+        return itemDate.getMonth() === userDate.getMonth() && itemDate.getFullYear() === userDate.getFullYear();
       });
       if (monthIndex !== -1) {
         monthData[monthIndex].count++;
@@ -266,398 +238,383 @@ export default function AdminDashboard() {
     return monthData;
   };
 
-  // Calculate recent activity - last 30 days
-  const recentActivity = users.filter(user => {
-    const thirtyDaysAgo = new Date();
-    thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
-    return new Date(user.createdAt) >= thirtyDaysAgo;
-  }).length;
+  // Chart colors
+  const COLORS = theme === 'dark' ? ['#60A5FA', '#F87171', '#34D399'] : ['#2563EB', '#DC2626', '#059669'];
 
   return (
-    <div className="min-h-screen bg-slate-900 text-slate-100">
-      <div className="container mx-auto p-6">
-        <div className="flex justify-between items-center mb-6">
-          <h1 className="text-3xl font-bold text-white">
-            <span className="bg-gradient-to-r from-indigo-400 via-purple-400 to-cyan-400 bg-clip-text text-transparent">
-              Admin Dashboard
-            </span>
-          </h1>
-          <div className='flex items-center space-x-2 justify-center'>
-            <Button
-              onClick={() => setDialogOpen(true)}
-              className="bg-indigo-600 hover:bg-indigo-700 text-white"
-            >
-              <UserPlus className="mr-2 h-4 w-4" /> Create User
-            </Button>
-            <SignOutButton component='div'>
-              <Button variant={'destructive'} className='bg-red-500 rounded-sm'>Logout <LogOutIcon/></Button>
-              </SignOutButton>
+    <div className={`min-h-screen ${theme === 'dark' ? 'bg-slate-900' : 'bg-slate-50'} transition-colors duration-300`}>
+      <div className="container mx-auto px-4 py-8 max-w-7xl">
+        <header className="mb-8">
+          <div className="flex justify-between items-center mb-6">
+            <div>
+              <h1 className={`text-3xl font-bold ${theme === 'dark' ? 'text-white' : 'text-slate-800'}`}>
+                Admin Dashboard
+              </h1>
+              <p className={`text-sm mt-2 ${theme === 'dark' ? 'text-slate-400' : 'text-slate-600'}`}>
+                Manage users and oversee career roadmaps.
+              </p>
+            </div>
+          
           </div>
-        </div>
-
-        <Tabs
-          defaultValue={activeTab}
-          onValueChange={setActiveTab}
-          className="w-full"
-        >
-          <TabsList className="mb-6 bg-slate-800 p-1">
-            <TabsTrigger
-              value="overview"
-              className="data-[state=active]:bg-indigo-600 data-[state=active]:text-white"
-            >
-              Overview
-            </TabsTrigger>
-            <TabsTrigger
-              value="users"
-              className="data-[state=active]:bg-indigo-600 data-[state=active]:text-white"
-            >
-              User Management
-            </TabsTrigger>
-          </TabsList>
-
-          <TabsContent value="overview" className="space-y-6">
-            {/* Statistics Cards */}
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-              {isLoading ? (
-                <>
-                  <CardSkeleton />
-                  <CardSkeleton />
-                  <CardSkeleton />
-                  <CardSkeleton />
-                </>
-              ) : (
-                <>
-                  <Card className="bg-slate-800 border-slate-700 hover:bg-slate-700/70 transition-colors">
-                    <CardHeader className="pb-2">
-                      <CardTitle className="text-sm font-medium text-slate-400">Total Users</CardTitle>
-                    </CardHeader>
-                    <CardContent>
-                      <div className="flex items-center justify-between">
-                        <div className="text-2xl font-bold text-white">{userStats.totalUsers}</div>
-                        <Users className="h-6 w-6 text-indigo-400" />
-                      </div>
-                    </CardContent>
-                  </Card>
-                  <Card className="bg-slate-800 border-slate-700 hover:bg-slate-700/70 transition-colors">
-                    <CardHeader className="pb-2">
-                      <CardTitle className="text-sm font-medium text-slate-400">Recent Activity</CardTitle>
-                    </CardHeader>
-                    <CardContent>
-                      <div className="flex items-center justify-between">
-                        <div className="text-2xl font-bold text-white">{recentActivity}</div>
-                        <Calendar className="h-6 w-6 text-cyan-400" />
-                      </div>
-                      <p className="text-xs text-slate-400 mt-1">New users in last 30 days</p>
-                    </CardContent>
-                  </Card>
-                  <Card className="bg-slate-800 border-slate-700 hover:bg-slate-700/70 transition-colors">
-                    <CardHeader className="pb-2">
-                      <CardTitle className="text-sm font-medium text-slate-400">Students</CardTitle>
-                    </CardHeader>
-                    <CardContent>
-                      <div className="flex items-center justify-between">
-                        <div className="text-2xl font-bold text-white">{userStats.studentCount}</div>
-                        <UserCheck className="h-6 w-6 text-cyan-400" />
-                      </div>
-                    </CardContent>
-                  </Card>
-                  <Card className="bg-slate-800 border-slate-700 hover:bg-slate-700/70 transition-colors">
-                    <CardHeader className="pb-2">
-                      <CardTitle className="text-sm font-medium text-slate-400">Alumni</CardTitle>
-                    </CardHeader>
-                    <CardContent>
-                      <div className="flex items-center justify-between">
-                        <div className="text-2xl font-bold text-white">{userStats.alumniCount}</div>
-                        <Award className="h-6 w-6 text-purple-400" />
-                      </div>
-                    </CardContent>
-                  </Card>
-                </>
-              )}
+          <div className="flex flex-col md:flex-row gap-4 items-start md:items-center">
+            <div className="relative flex-1">
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-slate-400" />
+              <Input
+                type="search"
+                placeholder="Search users or roadmaps..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className={`${theme === 'dark' ? 'bg-slate-800 border-slate-700 text-slate-200 placeholder:text-slate-400' : 'bg-white border-slate-200 text-slate-800 placeholder:text-slate-500'} pl-9 rounded-lg hover:bg-slate-100/50 dark:hover:bg-slate-700/50 transition-colors`}
+              />
             </div>
-
-            {/* Charts */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              {isLoading ? (
-                <>
-                  <ChartSkeleton />
-                  <ChartSkeleton />
-                </>
-              ) : (
-                <>
-                  <Card className="bg-slate-800 border-slate-700">
-                    <CardHeader>
-                      <CardTitle className="text-slate-100">User Role Distribution</CardTitle>
-                      <CardDescription className="text-slate-400">Breakdown of users by role</CardDescription>
-                    </CardHeader>
-                    <CardContent className="flex justify-center pt-6">
-                      <ResponsiveContainer width="100%" height={300}>
-                        <PieChart>
-                          <Pie
-                            data={roleDistribution}
-                            cx="50%"
-                            cy="50%"
-                            labelLine={false}
-                            outerRadius={100}
-                            fill="#8884d8"
-                            dataKey="value"
-                            label={({ name, percent }) => `${name}: ${(percent * 100).toFixed(0)}%`}
-                          >
-                            {roleDistribution.map((entry, index) => (
-                              <Cell key={`cell-${index}`} fill={COLORS.chart[index % COLORS.chart.length]} />
-                            ))}
-                          </Pie>
-                          <Tooltip
-                            formatter={(value) => [`${value} users`, '']}
-                            contentStyle={{ backgroundColor: '#1e293b', borderColor: '#334155', color: '#f1f5f9' }}
-                          />
-                          <Legend />
-                        </PieChart>
-                      </ResponsiveContainer>
-                    </CardContent>
-                  </Card>
-                  <Card className="bg-slate-800 border-slate-700">
-                    <CardHeader>
-                      <CardTitle className="text-slate-100">User Growth Trend</CardTitle>
-                      <CardDescription className="text-slate-400">Monthly user registration trends</CardDescription>
-                    </CardHeader>
-                    <CardContent className="pt-6">
-                      <ResponsiveContainer width="100%" height={300}>
-                        <BarChart
-                          data={getMonthData()}
-                          margin={{ top: 5, right: 20, left: 10, bottom: 5 }}
-                        >
-                          <XAxis dataKey="month" stroke="#94a3b8" />
-                          <YAxis stroke="#94a3b8" />
-                          <Tooltip
-                            formatter={(value) => [`${value} users`, 'Registrations']}
-                            contentStyle={{ backgroundColor: '#1e293b', borderColor: '#334155', color: '#f1f5f9' }}
-                          />
-                          <Legend />
-                          <Bar dataKey="count" name="New Users" fill="#6366f1" />
-                        </BarChart>
-                      </ResponsiveContainer>
-                    </CardContent>
-                  </Card>
-                </>
-              )}
+            <div className="flex gap-3">
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button
+                    variant="outline"
+                    className={`${theme === 'dark' ? 'border-slate-700 bg-slate-800 text-slate-200' : 'border-slate-200 bg-white text-slate-800'} gap-2 rounded-lg hover:bg-slate-100/50 dark:hover:bg-slate-700/50 transition-colors`}
+                  >
+                    <Filter className="h-4 w-4" />
+                    <span>Filter by Year</span>
+                    {yearFilter && <span className="ml-1 bg-indigo-600 text-white px-2 py-1 rounded-full text-xs">{yearFilter}</span>}
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent
+                  align="end"
+                  className={`${theme === 'dark' ? 'bg-slate-800 border-slate-700 text-slate-200' : 'bg-white border-slate-200 text-slate-800'} w-56`}
+                >
+                  <DropdownMenuLabel>Select Year</DropdownMenuLabel>
+                  <DropdownMenuSeparator />
+                  {availableYears.map((year) => (
+                    <DropdownMenuItem
+                      key={year}
+                      onClick={() => setYearFilter(Number(year))}
+                      className="cursor-pointer hover:bg-slate-100 dark:hover:bg-slate-700"
+                    >
+                      {year}
+                      {yearFilter === year && <span className="ml-auto">✓</span>}
+                    </DropdownMenuItem>
+                  ))}
+                  {availableYears.length > 0 && <DropdownMenuSeparator />}
+                  <DropdownMenuItem
+                    onClick={resetFilters}
+                    className={`${theme === 'dark' ? 'text-blue-400' : 'text-blue-600'} cursor-pointer hover:bg-slate-100 dark:hover:bg-slate-700`}
+                  >
+                    Reset filters
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+              <Button
+                onClick={() => setDialogOpen(true)}
+                className={`${theme === 'dark' ? 'bg-blue-600 hover:bg-blue-700' : 'bg-blue-600 hover:bg-blue-700'} text-white rounded-lg hover:scale-105 transition-transform`}
+              >
+                <UserPlus className="h-4 w-4 mr-2" /> Create User
+              </Button>
             </div>
-
-            {/* Recent Users */}
-            <Card className="bg-slate-800 border-slate-700">
-              <CardHeader>
-                <CardTitle className="text-slate-100">Recently Added Users</CardTitle>
-                <CardDescription className="text-slate-400">Latest 5 users added to the system</CardDescription>
-              </CardHeader>
-              <CardContent>
+          </div>
+        </header>
+        <main>
+          {isLoading ? (
+            <LoadingSpinner theme={theme as string} />
+          ) : (
+            <>
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
                 {isLoading ? (
-                  <LoadingSpinner />
+                  <>
+                    <ChartSkeleton theme={theme as string} />
+                    <ChartSkeleton theme={theme as string} />
+                  </>
                 ) : (
+                  <>
+                    <Card className={`${theme === 'dark' ? 'bg-slate-800 border-slate-700' : 'bg-white border-slate-200'} hover:shadow-lg transition-shadow`}>
+                      <CardHeader>
+                        <CardTitle className={theme === 'dark' ? 'text-slate-200' : 'text-slate-800'}>User Role Distribution</CardTitle>
+                      </CardHeader>
+                      <CardContent>
+                        <ResponsiveContainer width="100%" height={200}>
+                          <PieChart>
+                            <Pie
+                              data={roleDistribution}
+                              dataKey="value"
+                              nameKey="name"
+                              cx="50%"
+                              cy="50%"
+                              outerRadius={80}
+                              label
+                            >
+                              {roleDistribution.map((_, index) => (
+                                <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                              ))}
+                            </Pie>
+                            <Tooltip
+                              contentStyle={{
+                                background: theme === 'dark' ? '#1E293B' : '#FFFFFF',
+                                border: theme === 'dark' ? '1px solid #475569' : '1px solid #E2E8F0',
+                                color: theme === 'dark' ? '#E2E8F0' : '#1F2937',
+                              }}
+                            />
+                          </PieChart>
+                        </ResponsiveContainer>
+                        <p className={`text-center text-sm ${theme === 'dark' ? 'text-slate-400' : 'text-slate-600'}`}>
+                          Total Users: {userStats.totalUsers}
+                        </p>
+                      </CardContent>
+                    </Card>
+                    <Card className={`${theme === 'dark' ? 'bg-slate-800 border-slate-700' : 'bg-white border-slate-200'} hover:shadow-lg transition-shadow`}>
+                      <CardHeader>
+                        <CardTitle className={theme === 'dark' ? 'text-slate-200' : 'text-slate-800'}>User Growth Trend</CardTitle>
+                      </CardHeader>
+                      <CardContent>
+                        <ResponsiveContainer width="100%" height={200}>
+                          <BarChart data={getUserGrowthData()}>
+                            <XAxis dataKey="month" stroke={theme === 'dark' ? '#E2E8F0' : '#1F2937'} />
+                            <YAxis stroke={theme === 'dark' ? '#E2E8F0' : '#1F2937'} />
+                            <Tooltip
+                              contentStyle={{
+                                background: theme === 'dark' ? '#1E293B' : '#FFFFFF',
+                                border: theme === 'dark' ? '1px solid #475569' : '1px solid #E2E8F0',
+                                color: theme === 'dark' ? '#E2E8F0' : '#1F2937',
+                              }}
+                            />
+                            <Bar dataKey="count" fill={theme === 'dark' ? '#60A5FA' : '#2563EB'} />
+                          </BarChart>
+                        </ResponsiveContainer>
+                      </CardContent>
+                    </Card>
+                    <Card className={`${theme === 'dark' ? 'bg-slate-800 border-slate-700' : 'bg-white border-slate-200'} hover:shadow-lg transition-shadow`}>
+                      <CardHeader>
+                        <CardTitle className={theme === 'dark' ? 'text-slate-200' : 'text-slate-800'}>Roadmap Type Distribution</CardTitle>
+                      </CardHeader>
+                      <CardContent>
+                        <ResponsiveContainer width="100%" height={200}>
+                          <PieChart>
+                            <Pie
+                              data={data.roadmapData.stats.aiVsUser}
+                              dataKey="value"
+                              nameKey="name"
+                              cx="50%"
+                              cy="50%"
+                              outerRadius={80}
+                              label
+                            >
+                              {data.roadmapData.stats.aiVsUser.map((_, index) => (
+                                <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                              ))}
+                            </Pie>
+                            <Tooltip
+                              contentStyle={{
+                                background: theme === 'dark' ? '#1E293B' : '#FFFFFF',
+                                border: theme === 'dark' ? '1px solid #475569' : '1px solid #E2E8F0',
+                                color: theme === 'dark' ? '#E2E8F0' : '#1F2937',
+                              }}
+                            />
+                          </PieChart>
+                        </ResponsiveContainer>
+                        <p className={`text-center text-sm ${theme === 'dark' ? 'text-slate-400' : 'text-slate-600'}`}>
+                          Total Roadmaps: {data.roadmapData.stats.totalRoadmaps}
+                        </p>
+                      </CardContent>
+                    </Card>
+                    <Card className={`${theme === 'dark' ? 'bg-slate-800 border-slate-700' : 'bg-white border-slate-200'} hover:shadow-lg transition-shadow`}>
+                      <CardHeader>
+                        <CardTitle className={theme === 'dark' ? 'text-slate-200' : 'text-slate-800'}>Roadmaps by Year</CardTitle>
+                      </CardHeader>
+                      <CardContent>
+                        <ResponsiveContainer width="100%" height={200}>
+                          <BarChart data={data.roadmapData.stats.byYear}>
+                            <XAxis dataKey="year" stroke={theme === 'dark' ? '#E2E8F0' : '#1F2937'} />
+                            <YAxis stroke={theme === 'dark' ? '#E2E8F0' : '#1F2937'} />
+                            <Tooltip
+                              contentStyle={{
+                                background: theme === 'dark' ? '#1E293B' : '#FFFFFF',
+                                border: theme === 'dark' ? '1px solid #475569' : '1px solid #E2E8F0',
+                                color: theme === 'dark' ? '#E2E8F0' : '#1F2937',
+                              }}
+                            />
+                            <Bar dataKey="count" fill={theme === 'dark' ? '#60A5FA' : '#2563EB'} />
+                          </BarChart>
+                        </ResponsiveContainer>
+                      </CardContent>
+                    </Card>
+                  </>
+                )}
+              </div>
+              <Card className={`${theme === 'dark' ? 'bg-slate-800 border-slate-700' : 'bg-white border-slate-200'} hover:shadow-lg transition-shadow mb-8`}>
+                <CardHeader>
+                  <CardTitle className={theme === 'dark' ? 'text-slate-200' : 'text-slate-800'}>Users</CardTitle>
+                </CardHeader>
+                <CardContent>
                   <Table>
                     <TableHeader>
-                      <TableRow className="border-slate-700">
-                        <TableHead className="text-slate-300">Name</TableHead>
-                        <TableHead className="text-slate-300">Email</TableHead>
-                        <TableHead className="text-slate-300">Role</TableHead>
-                        <TableHead className="text-slate-300">Created At</TableHead>
+                      <TableRow>
+                        <TableHead
+                          className={`cursor-pointer ${theme === 'dark' ? 'text-slate-200' : 'text-slate-800'} hover:text-indigo-500`}
+                          onClick={() => handleSort('fullName')}
+                        >
+                          Name {sortField === 'fullName' && (sortOrder === 'asc' ? '↑' : '↓')}
+                        </TableHead>
+                        <TableHead
+                          className={`cursor-pointer ${theme === 'dark' ? 'text-slate-200' : 'text-slate-800'} hover:text-indigo-500`}
+                          onClick={() => handleSort('email')}
+                        >
+                          Email {sortField === 'email' && (sortOrder === 'asc' ? '↑' : '↓')}
+                        </TableHead>
+                        <TableHead
+                          className={`cursor-pointer ${theme === 'dark' ? 'text-slate-200' : 'text-slate-800'} hover:text-indigo-500`}
+                          onClick={() => handleSort('role')}
+                        >
+                          Role {sortField === 'role' && (sortOrder === 'asc' ? '↑' : '↓')}
+                        </TableHead>
                       </TableRow>
                     </TableHeader>
                     <TableBody>
-                      {users
-                        .sort((a, b) => b.createdAt - a.createdAt)
-                        .slice(0, 5)
-                        .map((user) => (
-                          <TableRow key={user.id} className="border-slate-700 hover:bg-slate-700/30">
-                            <TableCell className="text-slate-200">{user.fullName || 'N/A'}</TableCell>
-                            <TableCell className="text-slate-200">{user.email}</TableCell>
-                            <TableCell>
-                              <span className={`px-2 py-1 rounded-full text-xs font-medium ${getRoleBadgeStyle(user.role)}`}>
-                                {user.role}
-                              </span>
-                            </TableCell>
-                            <TableCell className="text-slate-300">
-                              {new Date(user.createdAt).toLocaleDateString()}
-                            </TableCell>
-                          </TableRow>
-                        ))}
-                    </TableBody>
-                  </Table>
-                )}
-              </CardContent>
-            </Card>
-          </TabsContent>
-
-          <TabsContent value="users">
-            {/* Search and Filter */}
-            <div className="flex items-center space-x-2 mb-6">
-              <div className="relative flex-1">
-                <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-slate-400" />
-                <Input
-                  placeholder="Search users by name or email..."
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                  className="pl-8 bg-slate-800 border-slate-700 text-slate-200 placeholder:text-slate-500 focus:border-indigo-500"
-                />
-              </div>
-              <Select
-                value={sortField as string}
-                onValueChange={(value) => setSortField(value as keyof User)}
-              >
-                <SelectTrigger className="w-[180px] bg-slate-800 border-slate-700 text-slate-200">
-                  <SelectValue placeholder="Sort by" />
-                </SelectTrigger>
-                <SelectContent className="bg-slate-800 border-slate-700 text-slate-200">
-                  <SelectItem value="fullName">Name</SelectItem>
-                  <SelectItem value="email">Email</SelectItem>
-                  <SelectItem value="role">Role</SelectItem>
-                  <SelectItem value="createdAt">Date Created</SelectItem>
-                </SelectContent>
-              </Select>
-              <Button
-                variant="outline"
-                onClick={() => setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc')}
-                className="bg-slate-800 border-slate-700 text-slate-200 hover:bg-slate-700 hover:text-slate-100"
-              >
-                {sortOrder === 'asc' ? '↑' : '↓'}
-              </Button>
-            </div>
-
-            {/* User Table */}
-            <Card className="bg-slate-800 border-slate-700">
-              <CardContent className="p-0">
-                <Table>
-                  <TableHeader>
-                    <TableRow className="border-slate-700">
-                      <TableHead
-                        className="cursor-pointer text-slate-300 hover:text-indigo-300"
-                        onClick={() => handleSort('fullName')}
-                      >
-                        Name {sortField === 'fullName' && (sortOrder === 'asc' ? '↑' : '↓')}
-                      </TableHead>
-                      <TableHead
-                        className="cursor-pointer text-slate-300 hover:text-indigo-300"
-                        onClick={() => handleSort('email')}
-                      >
-                        Email {sortField === 'email' && (sortOrder === 'asc' ? '↑' : '↓')}
-                      </TableHead>
-                      <TableHead
-                        className="cursor-pointer text-slate-300 hover:text-indigo-300"
-                        onClick={() => handleSort('role')}
-                      >
-                        Role {sortField === 'role' && (sortOrder === 'asc' ? '↑' : '↓')}
-                      </TableHead>
-                      <TableHead
-                        className="cursor-pointer text-slate-300 hover:text-indigo-300"
-                        onClick={() => handleSort('createdAt')}
-                      >
-                        Created At {sortField === 'createdAt' && (sortOrder === 'asc' ? '↑' : '↓')}
-                      </TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {isLoading ? (
-                      <TableRow>
-                        <TableCell colSpan={4} className="h-64">
-                          <LoadingSpinner />
-                        </TableCell>
-                      </TableRow>
-                    ) : filteredUsers.length === 0 ? (
-                      <TableRow>
-                        <TableCell colSpan={4} className="h-24 text-center text-slate-400">
-                          No users found
-                        </TableCell>
-                      </TableRow>
-                    ) : (
-                      filteredUsers.map((user) => (
-                        <TableRow key={user.id} className="border-slate-700 hover:bg-slate-700/30">
-                          <TableCell className="text-slate-200">{user.fullName || 'N/A'}</TableCell>
-                          <TableCell className="text-slate-200">{user.email}</TableCell>
-                          <TableCell>
-                            <span className={`px-2 py-1 rounded-full text-xs font-medium ${getRoleBadgeStyle(user.role)}`}>
-                              {user.role}
-                            </span>
-                          </TableCell>
-                          <TableCell className="text-slate-300">
-                            {new Date(user.createdAt).toLocaleDateString()}
+                      {filteredUsers.length === 0 ? (
+                        <TableRow>
+                          <TableCell colSpan={3} className={`h-24 text-center ${theme === 'dark' ? 'text-slate-400' : 'text-slate-600'}`}>
+                            No users found
                           </TableCell>
                         </TableRow>
-                      ))
-                    )}
-                  </TableBody>
-                </Table>
-              </CardContent>
-            </Card>
-          </TabsContent>
-        </Tabs>
-
-        {/* Create User Dialog */}
+                      ) : (
+                        filteredUsers.map((user) => (
+                          <TableRow key={user.id} className={`hover:bg-slate-700/30 dark:hover:bg-slate-700/30 transition-colors`}>
+                            <TableCell className={theme === 'dark' ? 'text-slate-200' : 'text-slate-800'}>{user.fullName || 'N/A'}</TableCell>
+                            <TableCell className={theme === 'dark' ? 'text-slate-200' : 'text-slate-800'}>{user.email}</TableCell>
+                            <TableCell className={theme === 'dark' ? 'text-slate-200' : 'text-slate-800'}>{user.role}</TableCell>
+                          </TableRow>
+                        ))
+                      )}
+                    </TableBody>
+                  </Table>
+                </CardContent>
+              </Card>
+              <Card className={`${theme === 'dark' ? 'bg-slate-800 border-slate-700' : 'bg-white border-slate-200'} hover:shadow-lg transition-shadow`}>
+                <CardHeader>
+                  <CardTitle className={theme === 'dark' ? 'text-slate-200' : 'text-slate-800'}>Roadmaps</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  {filteredRoadmaps.length === 0 ? (
+                    <div className={`text-center py-12 ${theme === 'dark' ? 'text-slate-400' : 'text-slate-600'}`}>
+                      <Filter className={`mx-auto w-16 h-16 rounded-full p-4 mb-4 ${theme === 'dark' ? 'bg-indigo-900/30 text-indigo-500' : 'bg-blue-100 text-blue-500'}`} />
+                      <h3 className={`text-xl font-semibold ${theme === 'dark' ? 'text-slate-200' : 'text-slate-800'} mb-2`}>No roadmaps found</h3>
+                      <p className="mb-6">
+                        {searchTerm || yearFilter !== null
+                          ? 'No roadmaps match your current filters.'
+                          : 'No roadmaps available.'}
+                      </p>
+                      {(searchTerm || yearFilter !== null) && (
+                        <Button
+                          onClick={resetFilters}
+                          variant="outline"
+                          className={`${theme === 'dark' ? 'border-slate-700 text-slate-200 hover:bg-slate-700' : 'border-slate-200 text-slate-800 hover:bg-slate-50'} rounded-lg hover:scale-105 transition-transform`}
+                        >
+                          Reset Filters
+                        </Button>
+                      )}
+                    </div>
+                  ) : (
+                    <Table>
+                      <TableHeader>
+                        <TableRow>
+                          <TableHead className={theme === 'dark' ? 'text-slate-200' : 'text-slate-800'}>Title</TableHead>
+                          <TableHead className={theme === 'dark' ? 'text-slate-200' : 'text-slate-800'}>Year</TableHead>
+                          <TableHead className={theme === 'dark' ? 'text-slate-200' : 'text-slate-800'}>Type</TableHead>
+                          <TableHead className={theme === 'dark' ? 'text-slate-200' : 'text-slate-800'}>Creator</TableHead>
+                          <TableHead className={theme === 'dark' ? 'text-slate-200' : 'text-slate-800'}>Created At</TableHead>
+                          <TableHead className={theme === 'dark' ? 'text-slate-200' : 'text-slate-800'}>Likes</TableHead>
+                        </TableRow>
+                      </TableHeader>
+                      <TableBody>
+                        {filteredRoadmaps.map((roadmap) => (
+                          <TableRow key={roadmap.title} className={`hover:bg-slate-700/30 dark:hover:bg-slate-700/30 transition-colors`}>
+                            <TableCell className={theme === 'dark' ? 'text-slate-200' : 'text-slate-800'}>{roadmap.title}</TableCell>
+                            <TableCell className={theme === 'dark' ? 'text-slate-200' : 'text-slate-800'}>{roadmap.year || 'N/A'}</TableCell>
+                            <TableCell className={theme === 'dark' ? 'text-slate-200' : 'text-slate-800'}>{roadmap.ai_generated}</TableCell>
+                            <TableCell className={theme === 'dark' ? 'text-slate-200' : 'text-slate-800'}>{roadmap.created_by}</TableCell>
+                            <TableCell className={theme === 'dark' ? 'text-slate-200' : 'text-slate-800'}>{roadmap.created_at}</TableCell>
+                            <TableCell className={theme === 'dark' ? 'text-slate-200' : 'text-slate-800'}>{roadmap.likes}</TableCell>
+                          </TableRow>
+                        ))}
+                      </TableBody>
+                    </Table>
+                  )}
+                </CardContent>
+              </Card>
+            </>
+          )}
+        </main>
         <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
-          <DialogContent className="sm:max-w-[425px] bg-slate-800 border-slate-700 text-slate-100">
+          <DialogContent
+            className={`${theme === 'dark' ? 'bg-slate-800 border-slate-700 text-slate-200' : 'bg-white border-slate-200 text-slate-800'} sm:max-w-md rounded-lg shadow-lg`}
+          >
             <DialogHeader>
-              <DialogTitle className="text-slate-100">Create New User</DialogTitle>
+              <DialogTitle className={`text-2xl ${theme === 'dark' ? 'text-slate-200' : 'text-slate-800'}`}>Create New User</DialogTitle>
             </DialogHeader>
             <form onSubmit={handleCreateUser} className="space-y-4">
               <div>
-                <Label htmlFor="firstName" className="text-slate-300">First Name</Label>
+                <Label htmlFor="firstName" className={`text-sm font-medium ${theme === 'dark' ? 'text-slate-200' : 'text-slate-700'}`}>
+                  First Name
+                </Label>
                 <Input
                   id="firstName"
                   value={formData.firstName}
-                  onChange={(e) =>
-                    setFormData({ ...formData, firstName: e.target.value })
-                  }
+                  onChange={(e) => setFormData({ ...formData, firstName: e.target.value })}
                   required
-                  className="bg-slate-700 border-slate-600 text-slate-200 placeholder:text-slate-500"
+                  className={`${theme === 'dark' ? 'bg-slate-700 border-slate-600 text-slate-200 placeholder:text-slate-400' : 'bg-slate-50 border-slate-200 text-slate-800 placeholder:text-slate-500'} rounded-lg hover:bg-slate-100/50 dark:hover:bg-slate-700/50 transition-colors`}
                 />
               </div>
               <div>
-                <Label htmlFor="lastName" className="text-slate-300">Last Name</Label>
+                <Label htmlFor="lastName" className={`text-sm font-medium ${theme === 'dark' ? 'text-slate-200' : 'text-slate-700'}`}>
+                  Last Name
+                </Label>
                 <Input
                   id="lastName"
                   value={formData.lastName}
-                  onChange={(e) =>
-                    setFormData({ ...formData, lastName: e.target.value })
-                  }
-                  className="bg-slate-700 border-slate-600 text-slate-200 placeholder:text-slate-500"
+                  onChange={(e) => setFormData({ ...formData, lastName: e.target.value })}
+                  className={`${theme === 'dark' ? 'bg-slate-700 border-slate-600 text-slate-200 placeholder:text-slate-400' : 'bg-slate-50 border-slate-200 text-slate-800 placeholder:text-slate-500'} rounded-lg hover:bg-slate-100/50 dark:hover:bg-slate-700/50 transition-colors`}
                 />
               </div>
               <div>
-                <Label htmlFor="email" className="text-slate-300">Email</Label>
+                <Label htmlFor="email" className={`text-sm font-medium ${theme === 'dark' ? 'text-slate-200' : 'text-slate-700'}`}>
+                  Email
+                </Label>
                 <Input
                   id="email"
                   type="email"
                   value={formData.email}
-                  onChange={(e) =>
-                    setFormData({ ...formData, email: e.target.value })
-                  }
+                  onChange={(e) => setFormData({ ...formData, email: e.target.value })}
                   required
-                  className="bg-slate-700 border-slate-600 text-slate-200 placeholder:text-slate-500"
+                  className={`${theme === 'dark' ? 'bg-slate-700 border-slate-600 text-slate-200 placeholder:text-slate-400' : 'bg-slate-50 border-slate-200 text-slate-800 placeholder:text-slate-500'} rounded-lg hover:bg-slate-100/50 dark:hover:bg-slate-700/50 transition-colors`}
                 />
               </div>
               <div>
-                <Label htmlFor="password" className="text-slate-300">Password</Label>
+                <Label htmlFor="password" className={`text-sm font-medium ${theme === 'dark' ? 'text-slate-200' : 'text-slate-700'}`}>
+                  Password
+                </Label>
                 <Input
                   id="password"
                   type="password"
                   value={formData.password}
-                  onChange={(e) =>
-                    setFormData({ ...formData, password: e.target.value })
-                  }
+                  onChange={(e) => setFormData({ ...formData, password: e.target.value })}
                   required
-                  className="bg-slate-700 border-slate-600 text-slate-200 placeholder:text-slate-500"
+                  className={`${theme === 'dark' ? 'bg-slate-700 border-slate-600 text-slate-200 placeholder:text-slate-400' : 'bg-slate-50 border-slate-200 text-slate-800 placeholder:text-slate-500'} rounded-lg hover:bg-slate-100/50 dark:hover:bg-slate-700/50 transition-colors`}
                 />
               </div>
               <div>
-                <Label htmlFor="role" className="text-slate-300">Role</Label>
+                <Label htmlFor="role" className={`text-sm font-medium ${theme === 'dark' ? 'text-slate-200' : 'text-slate-700'}`}>
+                  Role
+                </Label>
                 <Select
                   value={formData.role}
-                  onValueChange={(value) =>
-                    setFormData({ ...formData, role: value as 'admin' | 'student' | 'alumni' })
-                  }
+                  onValueChange={(value) => setFormData({ ...formData, role: value as 'admin' | 'student' | 'alumni' })}
                 >
-                  <SelectTrigger className="bg-slate-700 border-slate-600 text-slate-200">
+                  <SelectTrigger
+                    className={`${theme === 'dark' ? 'bg-slate-700 border-slate-600 text-slate-200' : 'bg-slate-50 border-slate-200 text-slate-800'} rounded-lg hover:bg-slate-100/50 dark:hover:bg-slate-700/50 transition-colors`}
+                  >
                     <SelectValue placeholder="Select role" />
                   </SelectTrigger>
-                  <SelectContent className="bg-slate-800 border-slate-700 text-slate-200">
+                  <SelectContent
+                    className={`${theme === 'dark' ? 'bg-slate-800 border-slate-700 text-slate-200' : 'bg-white border-slate-200 text-slate-800'}`}
+                  >
                     <SelectItem value="admin">Admin</SelectItem>
                     <SelectItem value="student">Student</SelectItem>
                     <SelectItem value="alumni">Alumni</SelectItem>
@@ -669,22 +626,16 @@ export default function AdminDashboard() {
                   variant="outline"
                   type="button"
                   onClick={() => setDialogOpen(false)}
-                  className="bg-slate-700 border-slate-600 text-slate-200 hover:bg-slate-600"
+                  className={`${theme === 'dark' ? 'border-slate-700 text-slate-200 hover:bg-slate-700' : 'border-slate-200 text-slate-800 hover:bg-slate-50'} rounded-lg hover:scale-105 transition-transform`}
                 >
                   Cancel
                 </Button>
                 <Button
                   type="submit"
-                  className="bg-indigo-600 hover:bg-indigo-700 text-white"
                   disabled={isSubmitting}
+                  className={`${theme === 'dark' ? 'bg-blue-600 hover:bg-blue-700' : 'bg-blue-600 hover:bg-blue-700'} rounded-lg hover:scale-105 transition-transform`}
                 >
-                  {isSubmitting ? (
-                    <>
-                      <Loader2 className="mr-2 h-4 w-4 animate-spin" /> Creating...
-                    </>
-                  ) : (
-                    'Create User'
-                  )}
+                  {isSubmitting ? <ClipLoader color="#f1f5f9" size={20} /> : 'Create User'}
                 </Button>
               </div>
             </form>

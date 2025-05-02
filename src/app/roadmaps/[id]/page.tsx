@@ -31,7 +31,6 @@ import {
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { roadmapHelper } from '@/lib/gemini';
-import Header from '@/components/misc/header';
 import { useTheme } from 'next-themes';
 import { ScaleLoader } from 'react-spinners';
 
@@ -807,7 +806,6 @@ export default function RoadmapDetail() {
   if (loading) {
     return (
       <div className={`min-h-screen ${theme === 'dark' ? 'bg-slate-900' : 'bg-slate-50'}`}>
-        <Header />
         <div className="flex items-center justify-center h-[80vh]">
           <div className="text-center">
             <ScaleLoader color={theme === 'dark' ? '#6366f1' : '#3b82f6'} height={35} />
@@ -824,7 +822,7 @@ export default function RoadmapDetail() {
   if (!roadmap) {
     return (
       <div className={`min-h-screen ${theme === 'dark' ? 'bg-slate-900' : 'bg-slate-50'}`}>
-        <Header />
+        
         <div className="flex items-center justify-center h-[80vh]">
           <div
             className={`text-center max-w-md mx-auto shadow-sm rounded-lg p-8 ${theme === 'dark' ? 'bg-slate-800 border-slate-700' : 'bg-white border-slate-200'}`}
@@ -867,7 +865,7 @@ export default function RoadmapDetail() {
 
   return (
     <div className={`min-h-screen ${theme === 'dark' ? 'bg-slate-900' : 'bg-slate-50'} transition-colors duration-300`}>
-      <Header />
+
       <Section>
         <div className="flex justify-between items-center mb-6">
           <Button

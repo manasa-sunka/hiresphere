@@ -28,7 +28,6 @@ import {
   Plus,
 } from 'lucide-react';
 import { toast } from 'sonner';
-import Header from '@/components/misc/header';
 import { useTheme } from 'next-themes';
 
 // Roadmap Interface
@@ -55,67 +54,60 @@ const RoadmapCard = ({ roadmap }: { roadmap: Roadmap }) => {
   return (
     <Link href={`/roadmaps/${roadmap.id}`} className="group">
       <Card
-        className={`h-full relative overflow-hidden ${
-          theme === 'dark' ? 'bg-slate-800 border-slate-700' : 'bg-white border-slate-200'
-        } shadow-sm hover:shadow-md transition-shadow duration-300`}
+        className={`h-full relative overflow-hidden ${theme === 'dark' ? 'bg-slate-800 border-slate-700' : 'bg-white border-slate-200'
+          } shadow-sm hover:shadow-md transition-shadow duration-300`}
       >
         <div className="absolute top-0 left-0 h-2 w-full bg-gradient-to-r from-blue-500 to-indigo-600 transform scale-x-0 group-hover:scale-x-100 transition-transform duration-300" />
         <CardHeader>
           <CardTitle
-            className={`text-xl font-semibold line-clamp-2 ${
-              theme === 'dark'
+            className={`text-xl font-semibold line-clamp-2 ${theme === 'dark'
                 ? 'text-slate-200 group-hover:text-blue-400'
                 : 'text-slate-800 group-hover:text-blue-600'
-            } transition-colors duration-200`}
+              } transition-colors duration-200`}
           >
             {roadmap.title}
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-3">
           <div
-            className={`flex items-center text-sm ${
-              theme === 'dark' ? 'text-slate-400' : 'text-slate-600'
-            }`}
+            className={`flex items-center text-sm ${theme === 'dark' ? 'text-slate-400' : 'text-slate-600'
+              }`}
           >
             <Calendar className="h-4 w-4 mr-2 text-slate-400" />
             <span>Year: {roadmap.year || 'Not specified'}</span>
           </div>
           <div
-            className={`flex items-center text-sm ${
-              theme === 'dark' ? 'text-slate-400' : 'text-slate-600'
-            }`}
+            className={`flex items-center text-sm ${theme === 'dark' ? 'text-slate-400' : 'text-slate-600'
+              }`}
           >
             <User className="h-4 w-4 mr-2 text-slate-400" />
             <span>
               By:{' '}
-              <Link
+              {/* <Link
                 href={`/users/${roadmap.created_by}`}
                 className={`${
                   theme === 'dark' ? 'hover:text-blue-400' : 'hover:text-blue-500'
                 } hover:underline`}
-              >
-                {roadmap.created_by}
-              </Link>
+              > */}
+              {roadmap.created_by}
+              {/* </Link> */}
             </span>
           </div>
         </CardContent>
         <CardFooter
-          className={`border-t pt-4 flex justify-between items-center ${
-            theme === 'dark' ? 'border-slate-700/50' : 'border-slate-100'
-          }`}
+          className={`border-t pt-4 flex justify-between items-center ${theme === 'dark' ? 'border-slate-700/50' : 'border-slate-100'
+            }`}
         >
           <div
-            className={`flex items-center text-sm ${
-              theme === 'dark' ? 'text-slate-400' : 'text-slate-500'
-            }`}
+            className={`flex items-center text-sm ${theme === 'dark' ? 'text-slate-400' : 'text-slate-500'
+              }`}
           >
             <Calendar className="h-3.5 w-3.5 mr-1.5" />
             <span>{new Date(roadmap.created_at).toLocaleDateString()}</span>
           </div>
           <div
-            className={`flex items-center text-sm font-medium ${
-              theme === 'dark' ? 'text-rose-400' : 'text-rose-500'
-            }`}
+            className={`flex items-center text-sm font-medium ${theme === 'dark' ? 'text-rose-400' : 'text-rose-500'
+              }`}
           >
             <Heart className="h-3.5 w-3.5 mr-1.5 fill-current" />
             <span>{roadmap.likes}</span>
@@ -154,9 +146,8 @@ const SearchFilter = ({
           placeholder="Search roadmaps..."
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
-          className={`pl-9 rounded-lg ${
-            theme === 'dark' ? 'bg-slate-800 border-slate-700 text-slate-200' : 'bg-white border-slate-200 text-slate-800'
-          }`}
+          className={`pl-9 rounded-lg ${theme === 'dark' ? 'bg-slate-800 border-slate-700 text-slate-200' : 'bg-white border-slate-200 text-slate-800'
+            }`}
           aria-label="Search roadmaps"
         />
       </div>
@@ -165,9 +156,8 @@ const SearchFilter = ({
           <DropdownMenuTrigger asChild>
             <Button
               variant="outline"
-              className={`gap-2 rounded-lg ${
-                theme === 'dark' ? 'border-slate-700 bg-slate-800 text-slate-200' : 'border-slate-200 bg-white text-slate-800'
-              }`}
+              className={`gap-2 rounded-lg ${theme === 'dark' ? 'border-slate-700 bg-slate-800 text-slate-200' : 'border-slate-200 bg-white text-slate-800'
+                }`}
             >
               <Filter className="h-4 w-4" />
               <span>Filter by Year</span>
@@ -201,9 +191,8 @@ const SearchFilter = ({
         </DropdownMenu>
         {role === 'alumni' && (
           <Button
-            className={`${
-              theme === 'dark' ? 'bg-blue-600 hover:bg-blue-700' : 'bg-blue-600 hover:bg-blue-700'
-            } text-white rounded-lg`}
+            className={`${theme === 'dark' ? 'bg-blue-600 hover:bg-blue-700' : 'bg-blue-600 hover:bg-blue-700'
+              } text-white rounded-lg`}
             asChild
           >
             <Link href="/alumni/dashboard" aria-label="Create Roadmap">
@@ -232,28 +221,24 @@ const EmptyState = ({
   const { theme } = useTheme();
   return (
     <div
-      className={`rounded-lg shadow-sm border p-12 text-center ${
-        theme === 'dark' ? 'bg-slate-800 border-slate-700' : 'bg-white border-slate-200'
-      }`}
+      className={`rounded-lg shadow-sm border p-12 text-center ${theme === 'dark' ? 'bg-slate-800 border-slate-700' : 'bg-white border-slate-200'
+        }`}
     >
       <div
-        className={`mx-auto w-16 h-16 rounded-full flex items-center justify-center mb-4 ${
-          theme === 'dark' ? 'bg-amber-900/30' : 'bg-amber-100'
-        }`}
+        className={`mx-auto w-16 h-16 rounded-full flex items-center justify-center mb-4 ${theme === 'dark' ? 'bg-amber-900/30' : 'bg-amber-100'
+          }`}
       >
         <Filter className={`h-6 w-6 ${theme === 'dark' ? 'text-amber-500' : 'text-amber-600'}`} />
       </div>
       <h3
-        className={`text-xl font-semibold ${
-          theme === 'dark' ? 'text-slate-200' : 'text-slate-800'
-        } mb-2`}
+        className={`text-xl font-semibold ${theme === 'dark' ? 'text-slate-200' : 'text-slate-800'
+          } mb-2`}
       >
         No roadmaps found
       </h3>
       <p
-        className={`text-sm max-w-md mx-auto mb-6 ${
-          theme === 'dark' ? 'text-slate-400' : 'text-slate-600'
-        }`}
+        className={`text-sm max-w-md mx-auto mb-6 ${theme === 'dark' ? 'text-slate-400' : 'text-slate-600'
+          }`}
       >
         {searchQuery || yearFilter !== null
           ? 'No roadmaps match your current filters. Try adjusting your search criteria.'
@@ -263,18 +248,16 @@ const EmptyState = ({
         <Button
           onClick={resetFilters}
           variant="outline"
-          className={`${
-            theme === 'dark' ? 'border-slate-700 text-slate-200' : 'border-slate-200 text-slate-800'
-          } rounded-lg`}
+          className={`${theme === 'dark' ? 'border-slate-700 text-slate-200' : 'border-slate-200 text-slate-800'
+            } rounded-lg`}
         >
           Reset Filters
         </Button>
       )}
       {role === 'alumni' && !searchQuery && yearFilter === null && (
         <Button
-          className={`${
-            theme === 'dark' ? 'bg-blue-600 hover:bg-blue-700' : 'bg-blue-600 hover:bg-blue-700'
-          } text-white rounded-lg mt-4`}
+          className={`${theme === 'dark' ? 'bg-blue-600 hover:bg-blue-700' : 'bg-blue-600 hover:bg-blue-700'
+            } text-white rounded-lg mt-4`}
           asChild
         >
           <Link href="/alumni/dashboard" aria-label="Create Your First Roadmap">
@@ -359,18 +342,16 @@ export default function RoadmapsPage() {
   if (loading) {
     return (
       <div className={`min-h-screen ${theme === 'dark' ? 'bg-slate-900' : 'bg-slate-50'}`}>
-        <Header />
+
         <div className="flex items-center justify-center h-[80vh]">
           <div className="text-center">
             <Loader
-              className={`h-10 w-10 animate-spin ${
-                theme === 'dark' ? 'text-blue-400' : 'text-blue-500'
-              } mx-auto`}
+              className={`h-10 w-10 animate-spin ${theme === 'dark' ? 'text-blue-400' : 'text-blue-500'
+                } mx-auto`}
             />
             <p
-              className={`text-sm mt-4 ${
-                theme === 'dark' ? 'text-slate-300' : 'text-slate-600'
-              }`}
+              className={`text-sm mt-4 ${theme === 'dark' ? 'text-slate-300' : 'text-slate-600'
+                }`}
             >
               Loading roadmaps...
             </p>
@@ -382,21 +363,19 @@ export default function RoadmapsPage() {
 
   return (
     <div className={`min-h-screen ${theme === 'dark' ? 'bg-slate-900' : 'bg-slate-50'} pb-16 transition-colors duration-300`}>
-      <Header />
+
       <Section>
         <div className="flex justify-between items-center mb-6">
           <div>
             <h1
-              className={`text-3xl font-bold ${
-                theme === 'dark' ? 'text-white' : 'text-slate-800'
-              } mb-2 animate-fade-in`}
+              className={`text-3xl font-bold ${theme === 'dark' ? 'text-white' : 'text-slate-800'
+                } mb-2 animate-fade-in`}
             >
               Career Roadmaps
             </h1>
             <p
-              className={`text-sm max-w-3xl ${
-                theme === 'dark' ? 'text-slate-300' : 'text-slate-600'
-              } animate-fade-in-up`}
+              className={`text-sm max-w-3xl ${theme === 'dark' ? 'text-slate-300' : 'text-slate-600'
+                } animate-fade-in-up`}
             >
               Explore curated career roadmaps to guide your professional journey, created by industry experts and successful alumni.
             </p>

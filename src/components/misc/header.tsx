@@ -3,34 +3,10 @@
 import { useState, useEffect } from 'react';
 import { useUser, UserButton, SignedIn, SignedOut, SignInButton, SignUpButton } from '@clerk/nextjs';
 import { useTheme } from 'next-themes';
-import { Moon, Sun, Home } from 'lucide-react';
+import { Moon, Sun, Home, TrophyIcon, LayoutDashboardIcon } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
 
-// Reusable UserInfo component
-const UserInfo = ({ user, role }: { user: { hasImage: boolean; imageUrl: string; fullName?: string }; role: 'admin' | 'alumni' | 'student' | undefined }) => (
-  <div className="flex items-center gap-3">
-    {user.hasImage ? (
-      <img
-        src={user.imageUrl}
-        alt={user.fullName || "User"}
-        className="h-10 w-10 rounded-full border-2 border-slate-300 dark:border-slate-600 shadow-md"
-      />
-    ) : (
-      <div className="h-10 w-10 rounded-full bg-slate-200 dark:bg-slate-700 flex items-center justify-center border-2 border-slate-300 dark:border-slate-600 shadow-md">
-        <span className="text-base font-medium text-slate-600 dark:text-slate-300">{user.fullName?.[0] || "U"}</span>
-      </div>
-    )}
-    <span className="text-base font-semibold truncate max-w-[120px] text-slate-900 dark:text-white hidden md:block">
-      {user.fullName || "User"}
-    </span>
-    {role && (
-      <span className="text-sm py-1 px-2.5 bg-blue-200 dark:bg-blue-900/80 text-blue-800 dark:text-blue-100 rounded-full font-medium hidden md:inline">
-        {role.charAt(0).toUpperCase() + role.slice(1)}
-      </span>
-    )}
-  </div>
-);
 
 export default function Header() {
   const { user, isLoaded } = useUser();
@@ -47,8 +23,36 @@ export default function Header() {
 
   // Determine dashboard link based on role
   const dashboardLink = role === 'admin' ? '/admin/dashboard' :
-                       role === 'alumni' ? '/alumni/dashboard' :
-                       role === 'student' ? '/student/dashboard' : null;
+    role === 'alumni' ? '/alumni/dashboard' :
+      role === 'student' ? '/student/dashboard' : null;
+
+  // Reusable UserInfo component
+  const UserInfo = ({ user, role }: { user: { hasImage: boolean; imageUrl: string; fullName?: string }; role: 'admin' | 'alumni' | 'student' | undefined }) => (
+    <div className="flex items-center gap-3">
+      <Link href={`${dashboardLink}`} className="flex items-center gap-3">
+        {user.hasImage ? (
+          <img
+            src={user.imageUrl}
+            alt={user.fullName || "User"}
+            className="h-10 w-10 rounded-full border-2 border-slate-300 dark:border-slate-600 shadow-md"
+          />
+        ) : (
+          <div className="h-10 w-10 rounded-full bg-slate-200 dark:bg-slate-700 flex items-center justify-center border-2 border-slate-300 dark:border-slate-600 shadow-md">
+            <span className="text-base font-medium text-slate-600 dark:text-slate-300">{user.fullName?.[0] || "U"}</span>
+          </div>
+        )}
+        <span className="text-base font-semibold truncate max-w-[120px] text-slate-900 dark:text-white hidden md:block">
+          {user.fullName || "User"}
+        </span>
+        {role && (
+          <span className="text-sm py-1 px-2.5 bg-blue-200 dark:bg-blue-900/80 text-blue-800 dark:text-blue-100 rounded-full font-medium hidden md:inline">
+            {role.charAt(0).toUpperCase() + role.slice(1)}
+          </span>
+        )}
+      </Link>
+    </div>
+  );
+
 
   return (
     <header className="sticky top-0 z-50 w-full border-b border-slate-300/50 bg-white dark:bg-slate-950 shadow-sm">
@@ -84,7 +88,22 @@ export default function Header() {
                   className="text-base font-medium text-slate-900 dark:text-white hover:bg-slate-200 dark:hover:bg-slate-800 hidden sm:flex"
                 >
                   <Link href={dashboardLink}>
+                    <LayoutDashboardIcon />
                     Dashboard
+                  </Link>
+                </Button>
+              )}
+
+              {role === 'admin' && (
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  asChild
+                  className="text-base font-medium text-slate-900 dark:text-white hover:bg-slate-200 dark:hover:bg-slate-800 hidden sm:flex"
+                >
+                  <Link href="/admin/success">
+                    <TrophyIcon className="h-5 w-5 mr-1" />
+                    Success Stories
                   </Link>
                 </Button>
               )}
@@ -109,13 +128,13 @@ export default function Header() {
           <SignedIn>
             <div className="flex items-center gap-3">
               {user && (
-                <UserInfo 
+                <UserInfo
                   user={{
                     hasImage: !!user.imageUrl,
                     imageUrl: user.imageUrl || '',
                     fullName: user.fullName || undefined
-                  }} 
-                  role={role} 
+                  }}
+                  role={role}
                 />
               )}
               <UserButton

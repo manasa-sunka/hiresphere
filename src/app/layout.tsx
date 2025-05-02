@@ -5,11 +5,11 @@ import { ClerkProvider } from "@clerk/nextjs";
 import { ThemeProvider } from "next-themes";
 import { Toaster } from "sonner";
 import { ensureDefaultRole } from "@/lib/roles";
+import Header from "@/components/misc/header";
 
-const lexend = Lexend({ 
-  subsets: ["latin"], 
-  weight: ["300", "400", "500", "600", "700"],
-  variable: "--font-lexend",
+const font = Lexend({
+  subsets: ["latin"],
+  weight: ["300"],
 });
 
 export const metadata: Metadata = {
@@ -34,9 +34,10 @@ export default async function RootLayout({
   return (
     <ClerkProvider>
       <html lang="en" suppressHydrationWarning>
-        <body className={`${lexend.variable} font-sans antialiased`}>
+      <body className={`${font.className} font-sans antialiased`}>
           <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
             <main className="min-h-screen flex flex-col bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-50 transition-colors duration-300">
+              <Header />
               {children}
             </main>
             <Toaster theme="light"
