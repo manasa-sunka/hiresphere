@@ -1,6 +1,5 @@
 import mysql from 'mysql2/promise';
-
-// Create a connection pool
+// Create a connection pool with SSL configuration
 const pool = mysql.createPool({
   host: process.env.MYSQL_HOST,
   user: process.env.MYSQL_USER,
@@ -10,6 +9,7 @@ const pool = mysql.createPool({
   waitForConnections: true,
   connectionLimit: 10,
   queueLimit: 0,
+
 });
 
 // Validate environment variables

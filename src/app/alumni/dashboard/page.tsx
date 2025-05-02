@@ -227,9 +227,7 @@ const AlumniDashboard = () => {
                   <DropdownMenuLabel>My Account</DropdownMenuLabel>
                   <DropdownMenuSeparator />
                   <DropdownMenuItem asChild>
-                    <Link href="/profile" className="cursor-pointer">
-                      Profile
-                    </Link>
+                   
                   </DropdownMenuItem>
                   <DropdownMenuItem asChild>
                     <SignOutButton>
