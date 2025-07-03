@@ -82,18 +82,6 @@ export default function StudentDashboard() {
 
     setLoading(true);
     try {
-      const cachedData = sessionStorage.getItem(`roadmaps-${user.id}`);
-      const cachedTimestamp = sessionStorage.getItem(`roadmaps-timestamp-${user.id}`);
-      const now = Date.now();
-
-      if (cachedData && cachedTimestamp && now - parseInt(cachedTimestamp) < 5 * 60 * 1000) {
-        const data = JSON.parse(cachedData);
-        const enrolledRoadmaps = data.filter((r: Roadmap) => r.progress);
-        setRoadmaps(enrolledRoadmaps);
-        setAllRoadmaps(enrolledRoadmaps);
-        setLoading(false);
-        return;
-      }
 
       const res = await fetch(`/api/roadmaps?userId=${user.id}`);
       if (!res.ok) throw new Error('Failed to fetch roadmaps');
@@ -101,8 +89,6 @@ export default function StudentDashboard() {
       const { data } = await res.json();
       const enrolledRoadmaps = data.filter((r: Roadmap) => r.progress);
 
-      sessionStorage.setItem(`roadmaps-${user.id}`, JSON.stringify(data));
-      sessionStorage.setItem(`roadmaps-timestamp-${user.id}`, now.toString());
 
       setRoadmaps(enrolledRoadmaps);
       setAllRoadmaps(enrolledRoadmaps);
