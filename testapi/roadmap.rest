@@ -1,0 +1,325 @@
+# roadmaps.http
+# HTTP requests for testing the Roadmaps API
+# Base URL: http://localhost:3000/api/roadmaps
+# Assumes PROTECT=true (Clerk authentication required)
+# Use with IntelliJ HTTP Client, VS Code REST Client, or similar
+# Replace <clerk-token-student> and <clerk-token-alumni> with valid Clerk session tokens
+# Ensure roadmap with id=1 exists in the database for valid tests
+
+### GET: Fetch all roadmaps (no userId)
+GET http://localhost:3000/api/roadmaps
+Accept: application/json
+
+###
+
+### GET: Fetch all roadmaps with userId (includes progress)
+GET http://localhost:3000/api/roadmaps?userId=test-user
+Accept: application/json
+
+###
+
+### GET: Fetch a specific roadmap by ID (valid ID, no userId)
+GET http://localhost:3000/api/roadmaps?id=1
+Accept: application/json
+
+###
+
+### GET: Fetch a specific roadmap by ID with userId (includes progress)
+GET http://localhost:3000/api/roadmaps?id=1&userId=test-user
+Accept: application/json
+
+###
+
+### GET: Fetch a specific roadmap by ID (invalid ID)
+GET http://localhost:3000/api/roadmaps?id=invalid
+Accept: application/json
+
+###
+
+### GET: Fetch a non-existent roadmap
+GET http://localhost:3000/api/roadmaps?id=99999
+Accept: application/json
+
+###
+
+### POST: Create a new roadmap (valid request, alumni role)
+POST http://localhost:3000/api/roadmaps
+Content-Type: application/json
+Accept: application/json
+Authorization: Bearer <clerk-token-alumni>
+
+{
+  "title": "Software Engineering Career Path",
+  "year": 3,
+  "ai_generated": false,
+  "steps": [
+    {
+      "title": "Learn Programming Fundamentals",
+      "bullets": ["Study Python or JavaScript", "Practice coding daily"],
+      "link": "https://example.com/programming"
+    },
+    {
+      "title": "Build Projects",
+      "bullets": ["Create a portfolio website", "Contribute to open source"]
+    }
+  ]
+}
+
+###
+
+### POST: Create a new roadmap (invalid role - student)
+POST http://localhost:3000/api/roadmaps
+Content-Type: application/json
+Accept: application/json
+Authorization: Bearer <clerk-token-student>
+
+{
+  "title": "Software Engineering Career Path",
+  "year": 3,
+  "ai_generated": false,
+  "steps": [
+    {
+      "title": "Learn Programming Fundamentals",
+      "bullets": ["Study Python or JavaScript", "Practice coding daily"]
+    }
+  ]
+}
+
+###
+
+### POST: Create a new roadmap (no authentication)
+POST http://localhost:3000/api/roadmaps
+Content-Type: application/json
+Accept: application/json
+
+{
+  "title": "Software Engineering Career Path",
+  "year": 3,
+  "ai_generated": false,
+  "steps": [
+    {
+      "title": "Learn Programming Fundamentals",
+      "bullets": ["Study Python or JavaScript", "Practice coding daily"]
+    }
+  ]
+}
+
+###
+
+### POST: Create a new roadmap (invalid request - missing title)
+POST http://localhost:3000/api/roadmaps
+Content-Type: application/json
+Accept: application/json
+Authorization: Bearer <clerk-token-alumni>
+
+{
+  "year": 3,
+  "ai_generated": false,
+  "steps": [
+    {
+      "title": "Learn Programming",
+      "bullets": ["Study Python"]
+    }
+  ]
+}
+
+###
+
+### POST: Create a new roadmap (invalid request - empty steps)
+POST http://localhost:3000/api/roadmaps
+Content-Type: application/json
+Accept: application/json
+Authorization: Bearer <clerk-token-alumni>
+
+{
+  "title": "Invalid Roadmap",
+  "year": 3,
+  "ai_generated": false,
+  "steps": []
+}
+
+###
+
+### PUT: Update roadmap progress (valid request - update liked, student role)
+PUT http://localhost:3000/api/roadmaps
+Content-Type: application/json
+Accept: application/json
+Authorization: Bearer <clerk-token-student>
+
+{
+  "userId": "test-user",
+  "roadmapId": 1,
+  "liked": true
+}
+
+###
+
+### PUT: Update roadmap progress (valid request - update completed steps, student role)
+PUT http://localhost:3000/api/roadmaps
+Content-Type: application/json
+Accept: application/json
+Authorization: Bearer <clerk-token-student>
+
+{
+  "userId": "test-user",
+  "roadmapId": 1,
+  "completed_steps": [0, 1]
+}
+
+###
+
+### PUT: Update roadmap progress (valid request - update both liked and completed steps, student role)
+PUT http://localhost:3000/api/roadmaps
+Content-Type: application/json
+Accept: application/json
+Authorization: Bearer <clerk-token-student>
+
+{
+  "userId": "test-user",
+  "roadmapId": 1,
+  "liked": true,
+  "completed_steps": [0]
+}
+
+###
+
+### PUT: Update roadmap progress (invalid role - alumni)
+PUT http://localhost:3000/api/roadmaps
+Content-Type: application/json
+Accept: application/json
+Authorization: Bearer <clerk-token-alumni>
+
+{
+  "userId": "test-user",
+  "roadmapId": 1,
+  "liked": true
+}
+
+###
+
+### PUT: Update roadmap progress (no authentication)
+PUT http://localhost:3000/api/roadmaps
+Content-Type: application/json
+Accept: application/json
+
+{
+  "userId": "test-user",
+  "roadmapId": 1,
+  "liked": true
+}
+
+###
+
+### PUT: Update roadmap progress (invalid request - missing userId)
+PUT http://localhost:3000/api/roadmaps
+Content-Type: application/json
+Accept: application/json
+Authorization: Bearer <clerk-token-student>
+
+{
+  "roadmapId": 1,
+  "liked": true
+}
+
+###
+
+### PUT: Update roadmap progress (invalid request - invalid roadmapId)
+PUT http://localhost:3000/api/roadmaps
+Content-Type: application/json
+Accept: application/json
+Authorization: Bearer <clerk-token-student>
+
+{
+  "userId": "test-user",
+  "roadmapId": -1,
+  "liked": true
+}
+
+###
+
+### PUT: Update roadmap progress (invalid request - no update fields)
+PUT http://localhost:3000/api/roadmaps
+Content-Type: application/json
+Accept: application/json
+Authorization: Bearer <clerk-token-student>
+
+{
+  "userId": "test-user",
+  "roadmapId": 1
+}
+
+###
+
+### PUT: Update roadmap progress (non-existent roadmap)
+PUT http://localhost:3000/api/roadmaps
+Content-Type: application/json
+Accept: application/json
+Authorization: Bearer <clerk-token-student>
+
+{
+  "userId": "test-user",
+  "roadmapId": 99999,
+  "liked": true
+}
+
+###
+
+### PUT: Update roadmap progress (userId mismatch)
+PUT http://localhost:3000/api/roadmaps
+Content-Type: application/json
+Accept: application/json
+Authorization: Bearer <clerk-token-student>
+
+{
+  "userId": "different-user",
+  "roadmapId": 1,
+  "liked": true
+}
+
+###
+
+### DELETE: Delete a roadmap (valid request, alumni role)
+DELETE http://localhost:3000/api/roadmaps?id=1
+Accept: application/json
+Authorization: Bearer <clerk-token-alumni>
+
+###
+
+### DELETE: Delete a roadmap (valid request, admin role)
+DELETE http://localhost:3000/api/roadmaps?id=1
+Accept: application/json
+Authorization: Bearer <clerk-token-admin>
+
+###
+
+### DELETE: Delete a roadmap (invalid role - student)
+DELETE http://localhost:3000/api/roadmaps?id=1
+Accept: application/json
+Authorization: Bearer <clerk-token-student>
+
+###
+
+### DELETE: Delete a roadmap (no authentication)
+DELETE http://localhost:3000/api/roadmaps?id=1
+Accept: application/json
+
+###
+
+### DELETE: Delete a roadmap (invalid ID)
+DELETE http://localhost:3000/api/roadmaps?id=invalid
+Accept: application/json
+Authorization: Bearer <clerk-token-alumni>
+
+###
+
+### DELETE: Delete a non-existent roadmap
+DELETE http://localhost:3000/api/roadmaps?id=99999
+Accept: application/json
+Authorization: Bearer <clerk-token-alumni>
+
+###
+
+### DELETE: Delete a roadmap (creator mismatch, non-admin alumni)
+DELETE http://localhost:3000/api/roadmaps?id=1
+Accept: application/json
+Authorization: Bearer <clerk-token-alumni-different-user>
