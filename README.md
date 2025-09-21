@@ -109,9 +109,9 @@ HireSphere is a platform designed to guide professionals on their career journey
 ---
 
 ## Contact
-**Omkar Kulkarni**  
+**Garudas_path**  
 Website: [1ndrajeet](https://1ndrajeet.is-a.dev/)  
-Phone: [8208607477](tel:+918208607477)  
+Phone: 9000126140 , 8208607477 
 
 Empowering professionals with curated career roadmaps and expert insights.  
 © 2025 HireSphere. All rights reserved.
